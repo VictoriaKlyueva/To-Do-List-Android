@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">ToDo List</string>
+    <string name="save">Скачать</string>
+    <string name="add_task">Введите задачу</string>
+    <string name="add">Добавить</string>
+    <string name="upload">Загрузить</string>
+    <string name="delete">Удалить</string>
 </resources>
