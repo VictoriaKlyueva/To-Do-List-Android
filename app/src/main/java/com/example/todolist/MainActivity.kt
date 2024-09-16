@@ -1,6 +1,11 @@
 package com.example.todolist
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.text.Editable
 import android.widget.Button
 import android.widget.EditText
@@ -16,9 +21,12 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 
 
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
     private var tasks = ArrayList<Task>()
+    private val PICK_FILE_REQUEST_CODE = 1
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -40,7 +48,9 @@ class MainActivity : AppCompatActivity() {
         // Обработчик кнопки добавления
         val addButton: Button = findViewById(R.id.buttonAddTask)
         addButton.setOnClickListener {
-            createTask(editTaskName.text)
+            val taskName = editTaskName.text
+            editTaskName.setText("")
+            createTask(taskName)
             adapter.notifyDataSetChanged();
         }
 
@@ -53,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         // Обработчик кнопки загрузки
         val uploadButton: Button = findViewById(R.id.uploadTasks)
         uploadButton.setOnClickListener {
-            uploadTasks()
+            chooseFile()
         }
     }
 
@@ -65,16 +75,30 @@ class MainActivity : AppCompatActivity() {
     private fun saveTasks() {
         val gson = Gson()
         val json = gson.toJson(tasks)
-        val fileName = "tasks.json"
-        val externalStorage = getExternalFilesDir(null)
 
-        val file = File(externalStorage, fileName)
-        // Записываем JSON в файл
+        val baseFileName = "tasks"
+        val extension = ".json"
+        var index = 1
+        var fileName = "$baseFileName$index$extension"
+
+        val directory = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS
+        )
+        var file = File(directory, fileName)
+
+        while (file.exists()) {
+            index++
+            fileName = "$baseFileName($index)$extension"
+            file = File(directory, fileName)
+        }
+
+        // Сохраняем файл
         FileOutputStream(file).use { fos ->
             OutputStreamWriter(fos).use { writer ->
                 writer.write(json)
             }
         }
+
         // Уведомление о успешном сохранении
         Toast.makeText(
             this,
@@ -83,12 +107,28 @@ class MainActivity : AppCompatActivity() {
         ).show()
     }
 
-    private fun uploadTasks() {
-        val fileName = "tasks.json"
-        val externalStorage = getExternalFilesDir(null)
+    private fun chooseFile() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "application/json"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        startActivityForResult(Intent.createChooser(
+            intent,
+            "Выберите файл"
+        ), PICK_FILE_REQUEST_CODE)
+    }
 
-        val file = File(externalStorage, fileName)
-        val json = file.readText()
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICK_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                uploadTasks(uri)
+            }
+        }
+    }
+
+    private fun uploadTasks(uri: Uri) {
+        val json = contentResolver.openInputStream(uri)?.bufferedReader().use { it?.readText() }
         val gson = Gson()
 
         val taskListType = object : com.google.gson.reflect.TypeToken<List<Task>>() {}.type
@@ -100,7 +140,7 @@ class MainActivity : AppCompatActivity() {
 
         Toast.makeText(
             this,
-            "Tasks loaded from $fileName",
+            "Tasks loaded from ${uri.lastPathSegment}",
             Toast.LENGTH_SHORT
         ).show()
     }
