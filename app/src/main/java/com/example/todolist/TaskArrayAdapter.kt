@@ -31,10 +31,10 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>)
         val deleteButton: Button = rootView.findViewById(R.id.deleteButton)
 
         // Устанавливаем данные
-        taskText.text = currentTask?.name
+        taskText.text = currentTask?.Description
 
         // Устанавливаем состояние чекбокса
-        checkbox.isChecked = currentTask?.flag ?: false
+        checkbox.isChecked = currentTask?.IsCompleted ?: false
 
         // Обработчик для кнопки удаления
         deleteButton.setOnClickListener {
@@ -46,7 +46,7 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>)
 
         // Обработчик для чекбокса
         checkbox.setOnCheckedChangeListener { _, isChecked ->
-            currentTask?.flag = isChecked
+            currentTask?.IsCompleted = isChecked
         }
 
         return rootView

@@ -1,7 +1,8 @@
 package com.example.todolist
 
 class Task(
-    val name: String
+    val Description: String
 ) {
-    var flag = false
+    var Id: Int? = null
+    var IsCompleted = false
 }
