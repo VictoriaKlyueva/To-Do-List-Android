@@ -11,11 +11,5 @@ interface ApiService {
     fun createTask(@Body task: Task): Call<Task>
 
     @GET("todo")
-    @Headers(
-        "Cache-Control: no-cache",
-        "Accept: application/json",
-        "Accept-Encoding: gzip, deflate, br",
-        "Connection: keep-alive"
-    )
     suspend fun getTasks(): List<Task>
 }
