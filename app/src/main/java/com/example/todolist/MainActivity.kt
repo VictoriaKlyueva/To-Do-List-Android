@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
         // Adapter for listView
         val listView = findViewById<ListView>(R.id.listView)
-        adapter = TaskArrayAdapter(this, tasks)
+        adapter = TaskArrayAdapter(this, tasks, apiService)
         listView.adapter = adapter
 
         val editTaskName: EditText = findViewById(R.id.editTaskName)
@@ -75,9 +75,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadTasks() {
         lifecycleScope.launch {
             try {
-                println("пиздец")
                 val taskList = apiService.getTasks()
-                println("пиздец")
                 tasks.clear()
                 tasks.addAll(taskList)
                 adapter.notifyDataSetChanged()

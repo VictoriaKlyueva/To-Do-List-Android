@@ -8,9 +8,13 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.TextView
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-class TaskArrayAdapter(context: Context, tasks: List<Task>)
+class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: ApiService)
     : ArrayAdapter<Task>(context, 0, tasks) {
+    private var apiService: ApiService = receivedApiService
 
     override fun getView(
         position: Int,
@@ -39,6 +43,19 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>)
         // Обработчик для кнопки удаления
         deleteButton.setOnClickListener {
             currentTask?.let { task ->
+                apiService.deleteTask(currentTask.id).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            println("Задача успешно удалена.")
+                        } else {
+                            println("Ошибка при удалении задачи: ${response.code()} - ${response.message()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        println("Неудача: ${t.message}")
+                    }
+                })
                 remove(task)
                 notifyDataSetChanged()
             }
