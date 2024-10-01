@@ -12,16 +12,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     private var tasks = ArrayList<Task>()
     private lateinit var apiService: ApiService
-    private val BASE_URL = "http://192.168.232.82:7067/api/"
+    private val BASE_URL = "http://192.168.232.82:5259/api/"
     lateinit var adapter: TaskArrayAdapter
 
     @SuppressLint("SetTextI18n")
@@ -35,9 +37,17 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        val client = OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build()
+
         // Initialize Retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -63,35 +73,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadTasks() {
-        // Запуск корутины для получения задач
         lifecycleScope.launch {
             try {
+                println("пиздец")
                 val taskList = apiService.getTasks()
+                println("пиздец")
                 tasks.clear()
-                tasks.addAll(taskList) // Добавляем полученные задачи в список
-                adapter.notifyDataSetChanged() // Уведомляем адаптер об изменениях
+                tasks.addAll(taskList)
+                adapter.notifyDataSetChanged()
             } catch (e: Exception) {
                 e.printStackTrace()
-
             }
         }
     }
 
     private fun createTask(taskName: Editable, adapter: TaskArrayAdapter) {
-        val newTask = Task(Description=taskName.toString())
+        val newTask = Task(description=taskName.toString())
         tasks.add(newTask)
-
-        println("Я ебала это все")
-        println(newTask)
 
         // Post new task API call
         apiService.createTask(newTask).enqueue(object : Callback<Task> {
             override fun onResponse(call: Call<Task>, response: Response<Task>) {
                 if (response.isSuccessful) {
-                    // Обработка успешного ответа
                     println("Task created successfully: ${response.body()}")
                 } else {
-                    // Получение исходного тела с ошибкой
                     val errorBody = response.errorBody()?.string()
                     println("Failed to create task: $errorBody")
                 }
