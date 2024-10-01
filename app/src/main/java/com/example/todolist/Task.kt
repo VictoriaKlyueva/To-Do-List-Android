@@ -1,8 +1,7 @@
 package com.example.todolist
 
-class Task(
-    val Description: String
-) {
-    var Id: Int? = null
-    var IsCompleted = false
-}
+data class Task(
+    val Id: Int = 0,
+    val Description: String,
+    var IsCompleted: Boolean = false
+)
