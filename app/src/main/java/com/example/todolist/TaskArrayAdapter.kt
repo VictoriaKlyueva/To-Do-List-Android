@@ -29,29 +29,24 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
 
         val currentTask = getItem(position)
 
-        // Находим элементы представления
         val checkbox: CheckBox = rootView.findViewById(R.id.checkBox)
         val taskText: TextView = rootView.findViewById(R.id.textView)
         val deleteButton: Button = rootView.findViewById(R.id.deleteButton)
 
-        // Устанавливаем данные
         taskText.text = currentTask?.description
-
-        // Устанавливаем состояние чекбокса
         checkbox.isChecked = currentTask?.isCompleted ?: false
 
-        // Обработчик для кнопки удаления
         deleteButton.setOnClickListener {
+            // Delete with request
             currentTask?.let { task ->
                 apiService.deleteTask(currentTask.id).enqueue(object : Callback<Void> {
                     override fun onResponse(call: Call<Void>, response: Response<Void>) {
                         if (response.isSuccessful) {
-                            println("Задача успешно удалена.")
+                            println("Задача удалена")
                         } else {
                             println("Ошибка при удалении задачи: ${response.code()} - ${response.message()}")
                         }
                     }
-
                     override fun onFailure(call: Call<Void>, t: Throwable) {
                         println("Неудача: ${t.message}")
                     }
@@ -63,7 +58,38 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
 
         // Обработчик для чекбокса
         checkbox.setOnCheckedChangeListener { _, isChecked ->
-            currentTask?.isCompleted = isChecked
+            if (isChecked) {
+                apiService.makeTaskCompleted(currentTask!!.id).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            println("Задача теперь выполнена")
+                        } else {
+                            println("Ошибка при попытке сделать задачу выполненной: " +
+                                    "${response.code()} - ${response.message()}")
+                        }
+                    }
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        println("Неудача: ${t.message}")
+                    }
+                })
+            }
+            else {
+                apiService.makeTaskIncompleted(currentTask!!.id).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            println("Задача теперь невыполнена")
+                        } else {
+                            println("Ошибка при попытке сделать задачу невыполненной: " +
+                                    "${response.code()} - ${response.message()}")
+                        }
+                    }
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        println("Неудача: ${t.message}")
+                    }
+                })
+            }
+
+            currentTask.isCompleted = isChecked
         }
 
         return rootView

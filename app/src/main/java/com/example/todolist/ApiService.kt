@@ -6,6 +6,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface ApiService {
@@ -17,4 +18,10 @@ interface ApiService {
 
     @DELETE("todo/{id}")
     fun deleteTask(@Path("id") taskId: Int): Call<Void>
+
+    @PUT("todo/complete/{id}")
+    fun makeTaskCompleted(@Path("id") taskId: Int): Call<Void>
+
+    @PUT("todo/incomplete/{id}")
+    fun makeTaskIncompleted(@Path("id") taskId: Int): Call<Void>
 }
