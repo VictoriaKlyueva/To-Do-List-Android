@@ -21,7 +21,6 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 
 
-@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
     private var tasks = ArrayList<Task>()
     private val PICK_FILE_REQUEST_CODE = 1
@@ -53,18 +52,6 @@ class MainActivity : AppCompatActivity() {
             createTask(taskName)
             adapter.notifyDataSetChanged();
         }
-
-        // Обработчик кнопки скачивания
-        val saveButton: Button = findViewById(R.id.saveTasks)
-        saveButton.setOnClickListener {
-            saveTasks()
-        }
-
-        // Обработчик кнопки загрузки
-        val uploadButton: Button = findViewById(R.id.uploadTasks)
-        uploadButton.setOnClickListener {
-            chooseFile()
-        }
     }
 
     private fun createTask(taskName: Editable) {
@@ -72,52 +59,7 @@ class MainActivity : AppCompatActivity() {
         tasks.add(newTask)
     }
 
-    private fun saveTasks() {
-        val gson = Gson()
-        val json = gson.toJson(tasks)
-
-        val baseFileName = "tasks"
-        val extension = ".json"
-        var index = 1
-        var fileName = "$baseFileName$index$extension"
-
-        val directory = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_DOWNLOADS
-        )
-        var file = File(directory, fileName)
-
-        while (file.exists()) {
-            index++
-            fileName = "$baseFileName($index)$extension"
-            file = File(directory, fileName)
-        }
-
-        // Сохраняем файл
-        FileOutputStream(file).use { fos ->
-            OutputStreamWriter(fos).use { writer ->
-                writer.write(json)
-            }
-        }
-
-        // Уведомление о успешном сохранении
-        Toast.makeText(
-            this,
-            "Tasks saved as $fileName",
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    private fun chooseFile() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "application/json"
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-        startActivityForResult(Intent.createChooser(
-            intent,
-            "Выберите файл"
-        ), PICK_FILE_REQUEST_CODE)
-    }
-
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {

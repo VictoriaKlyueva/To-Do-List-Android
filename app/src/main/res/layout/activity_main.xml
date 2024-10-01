@@ -41,25 +41,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
         android:layout_alignParentBottom="true"
         android:gravity="center" >
-
-        <Button
-            android:id="@+id/saveTasks"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save" />
-
-        <View
-            android:layout_width="16dp"
-            android:layout_height="fill_parent" />
-
-        <Button
-            android:id="@+id/uploadTasks"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/upload" />
     </LinearLayout>
 
 </RelativeLayout>
