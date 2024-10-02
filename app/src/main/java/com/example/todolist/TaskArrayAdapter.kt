@@ -38,7 +38,7 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
         taskText.text = currentTask?.description
         checkbox.isChecked = currentTask?.isCompleted ?: false
 
-        // Обработчик нажатия на текст задачи
+        // Handler for clicking on the task text
         taskText.setOnClickListener {
             showEditTaskDialog(currentTask)
         }
@@ -63,7 +63,7 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
             }
         }
 
-        // Обработчик для чекбокса
+        // Handler for checkbox clicking
         checkbox.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 apiService.makeTaskCompleted(currentTask!!.id).enqueue(object : Callback<Void> {
@@ -114,18 +114,22 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
             currentTask?.description = newDescription
             notifyDataSetChanged()
 
-            // Отправка обновленного описания на сервер
-            apiService.changeTaskDescription(currentTask!!.id, Description(newDescription)).enqueue(object : Callback<Void> {
+            // Put new description into server
+            apiService.changeTaskDescription(
+                currentTask!!.id,
+                Description(newDescription)
+            ).enqueue(object : Callback<Void> {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
                     if (response.isSuccessful) {
                         println("Описание задачи обновлено")
                     } else {
-                        println("Ошибка при обновлении задачи: ${response.code()} - ${response.message()}")
+                        println("Ошибка при обновлении задачи: " +
+                                "${response.code()}, ${response.message()}")
                     }
                 }
 
                 override fun onFailure(call: Call<Void>, t: Throwable) {
-                    println("Неудача: ${t.message}")
+                    println("Ошибка при отправке запроса: : ${t.message}")
                 }
             })
             dialog.dismiss()
