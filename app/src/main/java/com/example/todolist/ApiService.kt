@@ -24,4 +24,7 @@ interface ApiService {
 
     @PUT("todo/incomplete/{id}")
     fun makeTaskIncompleted(@Path("id") taskId: Int): Call<Void>
+
+    @PUT("todo/{id}")
+    fun changeTaskDescription(@Path("id") taskId: Int, @Body description: Description): Call<Void>
 }

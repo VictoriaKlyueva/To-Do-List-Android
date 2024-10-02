@@ -1,5 +1,6 @@
 package com.example.todolist
 
+import android.app.AlertDialog
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.TextView
 import retrofit2.Call
 import retrofit2.Callback
@@ -35,6 +37,11 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
 
         taskText.text = currentTask?.description
         checkbox.isChecked = currentTask?.isCompleted ?: false
+
+        // Обработчик нажатия на текст задачи
+        taskText.setOnClickListener {
+            showEditTaskDialog(currentTask)
+        }
 
         deleteButton.setOnClickListener {
             // Delete with request
@@ -93,5 +100,39 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
         }
 
         return rootView
+    }
+
+    private fun showEditTaskDialog(currentTask: Task?) {
+        val builder = AlertDialog.Builder(context)
+        val input = EditText(context)
+        input.setText(currentTask?.description)
+        builder.setTitle("Редактировать задачу")
+        builder.setView(input)
+
+        builder.setPositiveButton("Сохранить") { dialog, _ ->
+            val newDescription = input.text.toString()
+            currentTask?.description = newDescription
+            notifyDataSetChanged()
+
+            // Отправка обновленного описания на сервер
+            apiService.changeTaskDescription(currentTask!!.id, Description(newDescription)).enqueue(object : Callback<Void> {
+                override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                    if (response.isSuccessful) {
+                        println("Описание задачи обновлено")
+                    } else {
+                        println("Ошибка при обновлении задачи: ${response.code()} - ${response.message()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<Void>, t: Throwable) {
+                    println("Неудача: ${t.message}")
+                }
+            })
+            dialog.dismiss()
+        }
+
+        builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
+
+        builder.show()
     }
 }
