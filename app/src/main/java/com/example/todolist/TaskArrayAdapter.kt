@@ -28,20 +28,22 @@ class TaskArrayAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         var viewHolder: ViewHolder
-        val rootView = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item, parent, false).also {
+        val rootView = convertView ?: LayoutInflater.from(context).inflate(
+            R.layout.list_item,
+            parent,
+            false
+        ).also {
             viewHolder = ViewHolder(it)
             it.tag = viewHolder
-        } ?: return super.getView(position, convertView, parent)
+        }
 
-        // Если convertView существует, извлекаем viewHolder из тега
         viewHolder = rootView.tag as ViewHolder
-
         val currentTask = getItem(position)
 
+        viewHolder.checkbox.setOnCheckedChangeListener(null)
         viewHolder.checkbox.isChecked = currentTask?.isCompleted ?: false
         viewHolder.taskText.text = currentTask?.description
 
-        // Обработчик клика по тексту задачи
         viewHolder.taskText.setOnClickListener {
             showEditTaskDialog(currentTask)
         }
@@ -50,7 +52,6 @@ class TaskArrayAdapter(
             deleteTask(currentTask)
         }
 
-        // Обработчик клика по чекбоксу
         viewHolder.checkbox.setOnCheckedChangeListener { _, isChecked ->
             currentTask?.let { task ->
                 updateTaskCompletionStatus(task, isChecked)

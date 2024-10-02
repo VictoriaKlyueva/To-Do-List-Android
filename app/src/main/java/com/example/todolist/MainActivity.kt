@@ -53,11 +53,6 @@ class MainActivity : AppCompatActivity() {
 
         apiService = retrofit.create(ApiService::class.java)
 
-        // Adapter for listView
-        val listView = findViewById<ListView>(R.id.listView)
-        adapter = TaskArrayAdapter(this, tasks, apiService)
-        listView.adapter = adapter
-
         val editTaskName: EditText = findViewById(R.id.editTaskName)
 
         // Add Button Click Listener
@@ -70,6 +65,11 @@ class MainActivity : AppCompatActivity() {
 
         // Get tasks list with API
         loadTasks()
+
+        // Adapter for listView
+        val listView = findViewById<ListView>(R.id.listView)
+        adapter = TaskArrayAdapter(this, tasks, apiService)
+        listView.adapter = adapter
     }
 
     private fun loadTasks() {
