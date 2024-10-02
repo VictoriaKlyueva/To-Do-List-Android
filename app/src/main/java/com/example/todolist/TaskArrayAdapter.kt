@@ -14,92 +14,93 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: ApiService)
-    : ArrayAdapter<Task>(context, 0, tasks) {
-    private var apiService: ApiService = receivedApiService
+class TaskArrayAdapter(
+    context: Context,
+    tasks: List<Task>,
+    private val receivedApiService: ApiService
+) : ArrayAdapter<Task>(context, 0, tasks) {
 
-    override fun getView(
-        position: Int,
-        convertView: View?,
-        parent: ViewGroup
-    ): View {
-        val rootView = convertView ?: LayoutInflater.from(context).inflate(
-            R.layout.list_item,
-            parent,
-            false
-        )
+    private class ViewHolder(view: View) {
+        val checkbox: CheckBox = view.findViewById(R.id.checkBox)
+        val taskText: TextView = view.findViewById(R.id.textView)
+        val deleteButton: Button = view.findViewById(R.id.deleteButton)
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        var viewHolder: ViewHolder
+        val rootView = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item, parent, false).also {
+            viewHolder = ViewHolder(it)
+            it.tag = viewHolder
+        } ?: return super.getView(position, convertView, parent)
+
+        // Если convertView существует, извлекаем viewHolder из тега
+        viewHolder = rootView.tag as ViewHolder
 
         val currentTask = getItem(position)
 
-        val checkbox: CheckBox = rootView.findViewById(R.id.checkBox)
-        val taskText: TextView = rootView.findViewById(R.id.textView)
-        val deleteButton: Button = rootView.findViewById(R.id.deleteButton)
+        viewHolder.checkbox.isChecked = currentTask?.isCompleted ?: false
+        viewHolder.taskText.text = currentTask?.description
 
-        taskText.text = currentTask?.description
-        checkbox.isChecked = currentTask?.isCompleted ?: false
-
-        // Handler for clicking on the task text
-        taskText.setOnClickListener {
+        // Обработчик клика по тексту задачи
+        viewHolder.taskText.setOnClickListener {
             showEditTaskDialog(currentTask)
         }
 
-        deleteButton.setOnClickListener {
-            // Delete with request
-            currentTask?.let { task ->
-                apiService.deleteTask(currentTask.id).enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            println("Задача удалена")
-                        } else {
-                            println("Ошибка при удалении задачи: ${response.code()} - ${response.message()}")
-                        }
-                    }
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        println("Неудача: ${t.message}")
-                    }
-                })
-                remove(task)
-                notifyDataSetChanged()
-            }
+        viewHolder.deleteButton.setOnClickListener {
+            deleteTask(currentTask)
         }
 
-        // Handler for checkbox clicking
-        checkbox.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                apiService.makeTaskCompleted(currentTask!!.id).enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            println("Задача теперь выполнена")
-                        } else {
-                            println("Ошибка при попытке сделать задачу выполненной: " +
-                                    "${response.code()} - ${response.message()}")
-                        }
-                    }
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        println("Неудача: ${t.message}")
-                    }
-                })
+        // Обработчик клика по чекбоксу
+        viewHolder.checkbox.setOnCheckedChangeListener { _, isChecked ->
+            currentTask?.let { task ->
+                updateTaskCompletionStatus(task, isChecked)
+                task.isCompleted = isChecked
             }
-            else {
-                apiService.makeTaskIncompleted(currentTask!!.id).enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            println("Задача теперь невыполнена")
-                        } else {
-                            println("Ошибка при попытке сделать задачу невыполненной: " +
-                                    "${response.code()} - ${response.message()}")
-                        }
-                    }
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        println("Неудача: ${t.message}")
-                    }
-                })
-            }
-
-            currentTask.isCompleted = isChecked
         }
 
         return rootView
+    }
+
+    private fun deleteTask(currentTask: Task?) {
+        currentTask?.let { task ->
+            receivedApiService.deleteTask(task.id).enqueue(object : Callback<Void> {
+                override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                    if (response.isSuccessful) {
+                        println("Задача удалена")
+                        remove(task)
+                        notifyDataSetChanged()
+                    } else {
+                        println("Ошибка при удалении задачи: ${response.code()} - ${response.message()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<Void>, t: Throwable) {
+                    println("Неудача: ${t.message}")
+                }
+            })
+        }
+    }
+
+    private fun updateTaskCompletionStatus(task: Task, isChecked: Boolean) {
+        val apiCall = if (isChecked) {
+            receivedApiService.makeTaskCompleted(task.id)
+        } else {
+            receivedApiService.makeTaskIncompleted(task.id)
+        }
+
+        apiCall.enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    println("Статус задачи обновлен: ${if (isChecked) "выполнена" else "невыполнена"}")
+                } else {
+                    println("Ошибка при обновлении статуса задачи: ${response.code()} - ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                println("Неудача: ${t.message}")
+            }
+        })
     }
 
     private fun showEditTaskDialog(currentTask: Task?) {
@@ -113,30 +114,31 @@ class TaskArrayAdapter(context: Context, tasks: List<Task>, receivedApiService: 
             val newDescription = input.text.toString()
             currentTask?.description = newDescription
             notifyDataSetChanged()
-
-            // Put new description into server
-            apiService.changeTaskDescription(
-                currentTask!!.id,
-                Description(newDescription)
-            ).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                    if (response.isSuccessful) {
-                        println("Описание задачи обновлено")
-                    } else {
-                        println("Ошибка при обновлении задачи: " +
-                                "${response.code()}, ${response.message()}")
-                    }
-                }
-
-                override fun onFailure(call: Call<Void>, t: Throwable) {
-                    println("Ошибка при отправке запроса: : ${t.message}")
-                }
-            })
+            updateTaskDescription(currentTask, newDescription)
             dialog.dismiss()
         }
 
         builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
 
         builder.show()
+    }
+
+    private fun updateTaskDescription(currentTask: Task?, newDescription: String) {
+        currentTask?.let { task ->
+            receivedApiService.changeTaskDescription(task.id, Description(newDescription))
+                .enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            println("Описание задачи обновлено")
+                        } else {
+                            println("Ошибка при обновлении задачи: ${response.code()}, ${response.message()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        println("Ошибка при отправке запроса: ${t.message}")
+                    }
+                })
+        }
     }
 }
