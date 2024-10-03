@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -113,10 +114,15 @@ class TaskArrayAdapter(
 
         builder.setPositiveButton("Сохранить") { dialog, _ ->
             val newDescription = input.text.toString()
-            currentTask?.description = newDescription
-            notifyDataSetChanged()
-            updateTaskDescription(currentTask, newDescription)
-            dialog.dismiss()
+            // Проверяем, не пустой ли текст
+            if (newDescription.isBlank()) {
+                Toast.makeText(context, "Описание не может быть пустым", Toast.LENGTH_SHORT).show()
+            } else {
+                currentTask?.description = newDescription
+                notifyDataSetChanged()
+                updateTaskDescription(currentTask, newDescription)
+                dialog.dismiss()
+            }
         }
 
         builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }

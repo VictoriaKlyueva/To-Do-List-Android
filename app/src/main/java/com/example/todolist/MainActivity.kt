@@ -6,6 +6,7 @@ import android.text.Editable
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -59,8 +60,12 @@ class MainActivity : AppCompatActivity() {
         val addButton: Button = findViewById(R.id.buttonAddTask)
         addButton.setOnClickListener {
             val taskName = editTaskName.text
-            editTaskName.setText("")
-            createTask(taskName, adapter)
+            if (taskName.isBlank()) {
+                Toast.makeText(this, "Описание не может быть пустым", Toast.LENGTH_SHORT).show()
+            } else {
+                editTaskName.setText("")
+                createTask(taskName, adapter)
+            }
         }
 
         // Get tasks list with API
